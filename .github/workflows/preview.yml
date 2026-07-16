@@ -4,7 +4,7 @@ on:
     - cron: '0 18 * * 1-5'   # EDT: fires ~110min before 19:50 UTC target
     - cron: '0 19 * * 1-5'   # EST: fires ~110min before 20:50 UTC target
   workflow_dispatch:
-permissions: { contents: write }
+permissions: { contents: write, actions: write }
 jobs:
   preview:
     runs-on: ubuntu-latest
