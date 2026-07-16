@@ -35,7 +35,7 @@ export function renderHeader(state: AppState, s: Signals): void {
   const toggle = $('preview-toggle') as HTMLButtonElement
   if (state.preview) {
     toggle.style.display = ''
-    toggle.textContent = state.view === 'preview' ? 'Viewing PREVIEW → switch to SETTLED' : 'Viewing SETTLED → switch to PREVIEW'
+    toggle.textContent = state.view === 'preview' ? 'Switch to SETTLED' : 'Switch to PREVIEW'
   } else {
     toggle.style.display = 'none'
   }
@@ -287,7 +287,95 @@ export function renderChecklist(s: Signals): void {
   }
 }
 
+function volDescription(rv20: number): string {
+  if (rv20 <= 0.55) return 'calm'
+  if (rv20 <= 0.65) return 'a bit elevated'
+  if (rv20 <= 0.90) return 'high'
+  return 'extreme'
+}
+
+function trendDescription(T: number): string {
+  if (T === 1.0) return 'The long-term trend is intact — SOXX is above its 200-day average.'
+  if (T === 0.5) {
+    return 'The long-term trend has weakened — SOXX dipped below its 200-day average, so ' +
+      'exposure is being trimmed as a precaution.'
+  }
+  return 'The long-term trend has broken down — SOXX has closed below its 200-day average for ' +
+    '5+ sessions in a row, so exposure is being cut sharply until it recovers.'
+}
+
+export function renderSummary(s: Signals): void {
+  const headlineEl = $('summary-headline')
+  const actionEl = $('summary-action')
+  const whyEl = $('summary-why')
+  whyEl.innerHTML = ''
+
+  const targetPct = Math.round(s.engine.e_target * 100)
+  const deployedPct = Math.round(s.engine.deployed * 100)
+  const gapPct = Math.round(Math.abs(s.engine.gap) * 100)
+  const increasing = s.engine.gap > 0
+
+  let headline: string
+  let headlineClass: 'summary-headline-hold' | 'summary-headline-act' | 'summary-headline-warn'
+  let action: string
+
+  if (s.tripwires.any) {
+    headline = 'Pause — the plan needs a review'
+    headlineClass = 'summary-headline-warn'
+    action = 'A major red-flag condition has been triggered (see the Tripwire Board below). ' +
+      "Don't act on today's numbers until the plan has been reviewed against what changed."
+  } else if (s.caps.sleeve_breach) {
+    headline = 'Stop-loss triggered — move to cash'
+    headlineClass = 'summary-headline-warn'
+    action = `Your invested position has lost more than the plan allows for (blended ` +
+      `${pct(s.caps.sleeve_pnl)}). This rule overrides everything else: reduce to flat.`
+  } else if (s.engine.act) {
+    headline = increasing
+      ? `Move toward ${targetPct}% invested in SOXL`
+      : `Reduce toward ${targetPct}% invested in SOXL`
+    headlineClass = 'summary-headline-act'
+    action = `You're currently at ${deployedPct}% invested; today's target is ${targetPct}%. ` +
+      (increasing ? 'Move money into SOXL' : 'Move money out of SOXL') +
+      ' at today\'s closing auction (MOC) — never at tomorrow\'s open.'
+  } else {
+    headline = 'Hold steady — no changes needed today'
+    headlineClass = 'summary-headline-hold'
+    action = `You're at ${deployedPct}% invested against a ${targetPct}% target. That ` +
+      `${gapPct}-point gap is too small to act on (the plan only moves once it reaches 10 ` +
+      'points), so there\'s no trade today.'
+  }
+
+  headlineEl.textContent = headline
+  headlineEl.className = `summary-headline ${headlineClass}`
+  actionEl.textContent = action
+
+  const bullets: string[] = [
+    `Market volatility is ${volDescription(s.engine.rv20)} right now (${pct(s.engine.rv20)} ` +
+      'annualized) — this is the main thing driving how much the plan wants you invested.',
+    trendDescription(s.engine.gate.T),
+  ]
+  if (s.vrp.zone === 'BUY_OPTIONALITY') {
+    bullets.push('Options are pricing cheap relative to how much the market is actually moving.')
+  } else if (s.vrp.zone === 'DERISK_SHARES') {
+    bullets.push('Options are pricing rich relative to realized moves right now.')
+  }
+  const armed = s.tranches.find((t) => t.status === 'ARMED')
+  if (deployedPct === 0 && s.tranches.every((t) => t.status !== 'ARMED')) {
+    bullets.push("You're fully in cash. This plan deploys in stages rather than all at once — " +
+      'see the Tranche Board below for what has to happen first.')
+  } else if (armed) {
+    bullets.push(`${armed.id} is armed and ready to deploy — see the Tranche Board below.`)
+  }
+
+  for (const b of bullets) {
+    const li = document.createElement('li')
+    li.textContent = b
+    whyEl.appendChild(li)
+  }
+}
+
 export function renderAll(state: AppState, s: Signals): void {
+  renderSummary(s)
   renderHeader(state, s)
   renderGauge(s)
   renderTranches(s)

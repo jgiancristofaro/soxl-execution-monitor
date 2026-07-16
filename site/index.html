@@ -29,6 +29,13 @@
     PREVIEW 3:50pm ET — unsettled
   </div>
 
+  <section class="card summary-card" id="summary-panel">
+    <div class="summary-label">Today's recommendation</div>
+    <div id="summary-headline" class="summary-headline">--</div>
+    <p id="summary-action" class="summary-action"></p>
+    <ul id="summary-why" class="summary-why"></ul>
+  </section>
+
   <section class="card header-strip" id="header-strip">
     <div class="stat"><span class="stat-label">SOXX close</span><span id="soxx-close" class="stat-value">--</span></div>
     <div class="stat"><span class="stat-label">SOXL close</span><span id="soxl-close" class="stat-value">--</span></div>
@@ -111,19 +118,19 @@
   <section class="charts-grid">
     <div class="card chart-card">
       <h2>SOXL Close (YTD) — tranche fills</h2>
-      <canvas id="chart-soxl"></canvas>
+      <div class="chart-container"><canvas id="chart-soxl"></canvas></div>
     </div>
     <div class="card chart-card">
       <h2>rv20 vs thresholds</h2>
-      <canvas id="chart-rv20"></canvas>
+      <div class="chart-container"><canvas id="chart-rv20"></canvas></div>
     </div>
     <div class="card chart-card">
       <h2>E_target history</h2>
-      <canvas id="chart-etarget"></canvas>
+      <div class="chart-container"><canvas id="chart-etarget"></canvas></div>
     </div>
     <div class="card chart-card">
       <h2>Attribution: engine vs buy-and-hold</h2>
-      <canvas id="chart-attribution"></canvas>
+      <div class="chart-container"><canvas id="chart-attribution"></canvas></div>
     </div>
   </section>
 

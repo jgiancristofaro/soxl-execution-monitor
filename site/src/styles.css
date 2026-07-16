@@ -123,6 +123,50 @@ header h1 {
   color: var(--muted);
 }
 
+/* ── Plain-language recommendation ───────────────────────────────────────── */
+.summary-card {
+  border-width: 2px;
+  border-color: var(--accent);
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.07), var(--bg2) 60%);
+}
+.summary-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.4rem;
+}
+.summary-headline {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.25;
+  margin-bottom: 0.5rem;
+}
+.summary-headline-hold { color: var(--green); }
+.summary-headline-act { color: var(--amber); }
+.summary-headline-warn { color: var(--red); }
+.summary-action {
+  color: var(--text);
+  font-size: 0.95rem;
+  margin-bottom: 0.75rem;
+}
+.summary-why {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: #d1d5db;
+}
+.summary-why li { padding-left: 1.1rem; position: relative; }
+.summary-why li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+}
+
 /* ── Header strip (PR-1) ──────────────────────────────────────────────── */
 .header-strip { display: flex; flex-wrap: wrap; gap: 1.5rem; }
 .stat { display: flex; flex-direction: column; gap: 0.15rem; }
@@ -215,8 +259,8 @@ header h1 {
 .pnl-positive { color: var(--green); }
 
 /* ── Caps (PR-4) ──────────────────────────────────────────────────────── */
-.caps-row { display: flex; align-items: center; gap: 1rem; padding: 0.4rem 0; }
-.sleeve-row { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 0.75rem; }
+.caps-row { display: flex; align-items: center; gap: 1rem; padding: 0.4rem 0; flex-wrap: wrap; }
+.sleeve-row { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
 .empty-note { color: var(--muted); font-size: 0.85rem; }
 
 /* ── VRP (PR-5) ───────────────────────────────────────────────────────── */
@@ -227,8 +271,9 @@ header h1 {
 .zone-neutral { background: rgba(107, 114, 128, 0.15); color: var(--muted); }
 
 /* ── Events (PR-6) ────────────────────────────────────────────────────── */
-.event-row { display: flex; align-items: center; gap: 1rem; padding: 0.4rem 0; font-size: 0.85rem; border-bottom: 1px solid var(--border); }
+.event-row { display: flex; align-items: center; gap: 0.75rem 1rem; padding: 0.5rem 0; font-size: 0.85rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
 .event-row:last-child { border-bottom: none; }
+.event-row span:nth-child(2) { flex: 1 1 160px; }
 
 /* ── Tripwires (PR-7) ─────────────────────────────────────────────────── */
 .tripwire-row { padding: 0.3rem 0; }
@@ -248,8 +293,12 @@ header h1 {
   gap: 1rem;
   margin-top: 1rem;
 }
-.chart-card { margin-top: 0; height: 320px; display: flex; flex-direction: column; }
-.chart-card canvas { flex: 1 1 auto; min-height: 0; }
+.chart-card { margin-top: 0; display: flex; flex-direction: column; }
+/* Chart.js measures its canvas's immediate parent box on first paint; giving that parent a
+   fixed height up front (rather than flex-distributed remaining space, which can resolve one
+   layout pass late) avoids a stale internal canvas buffer that renders the chart squished. */
+.chart-container { position: relative; height: 260px; width: 100%; }
+.chart-container canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
 
 /* ── Footer ───────────────────────────────────────────────────────────── */
 footer {
@@ -265,7 +314,31 @@ footer a:hover { text-decoration: underline; }
 
 /* ── Mobile: single column, hero + tripwire above the fold (7.5) ────────── */
 @media (max-width: 720px) {
+  .app { padding: 0 0.85rem 2rem; }
+  .card { padding: 0.9rem 1rem; }
+
+  header { gap: 0.5rem 0.75rem; }
+  header h1 { font-size: 1.1rem; flex-basis: 100%; }
+  #last-session { flex-basis: 100%; }
+
+  .summary-headline { font-size: 1.25rem; }
+
   .charts-grid { grid-template-columns: 1fr; }
+  .chart-container { height: 220px; }
+
   .e-target-number { font-size: 2.25rem; }
   .gauge-row { flex-direction: column; align-items: stretch; }
+  .act-flag { text-align: center; }
+  .gate-row { gap: 0.5rem 1.25rem; }
+
+  .header-strip { gap: 1rem 1.5rem; }
+
+  .event-row span:nth-child(2) { flex-basis: 100%; order: -1; }
+
+  .caps-row { gap: 0.5rem 1rem; }
+}
+
+@media (max-width: 400px) {
+  .e-target-number { font-size: 1.9rem; }
+  .act-flag { font-size: 1.1rem; padding: 0.3rem 0.75rem; }
 }
