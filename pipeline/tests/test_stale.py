@@ -16,7 +16,9 @@ def test_second_run_same_session_no_new_alerts_last_session_unchanged(soxx_df, s
     assert guarded is not None
     assert guarded["last_session"] == first["last_session"]
     assert guarded["generated_utc"] == "2026-07-15T23:00:00+00:00"
-    assert guarded["alerts"] == first["alerts"]  # no new alerts appended
+    # alerts are cleared, not carried forward -- otherwise the daily workflow's issue-creation
+    # step would re-open the same GH issue on every subsequent guarded (no-new-session) day
+    assert guarded["alerts"] == []
 
 
 def test_new_session_returns_none_signals_recompute_needed(soxx_df, soxl_df, manual, position, events):

@@ -1,6 +1,6 @@
 {
   "last_session": "2026-07-15",
-  "generated_utc": "2026-07-16T01:13:28.604847+00:00",
+  "generated_utc": "2026-07-16T01:17:24.145854+00:00",
   "data_stale": false,
   "is_preview": false,
   "market": {
@@ -3047,11 +3047,5 @@
       "value": 1
     }
   ],
-  "alerts": [
-    {
-      "type": "act",
-      "title": "ACT \u2014 rebalance to target 0.632",
-      "body": "Rebalance to target at MOC \u2014 never at the open."
-    }
-  ]
+  "alerts": []
 }

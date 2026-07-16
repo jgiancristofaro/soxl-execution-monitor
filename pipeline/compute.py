@@ -275,11 +275,17 @@ def apply_stale_guard(
     previous: dict | None, last_session: str, generated_utc: str, data_stale: bool
 ) -> dict | None:
     """Stale/holiday guard (§6.5): same session as last write -> patch metadata only, no
-    recompute, no new alerts. Returns None when a full recompute is needed instead."""
+    recompute, no new alerts. Returns None when a full recompute is needed instead.
+
+    Clears alerts (rather than carrying the previous run's forward) because the daily
+    workflow opens a GH issue for whatever is in `alerts` on every run -- leaving a stale
+    alert in place would re-open the same issue on every subsequent guarded day.
+    """
     if previous and previous.get("last_session") == last_session:
         patched = dict(previous)
         patched["generated_utc"] = generated_utc
         patched["data_stale"] = data_stale
+        patched["alerts"] = []
         return patched
     return None
 
