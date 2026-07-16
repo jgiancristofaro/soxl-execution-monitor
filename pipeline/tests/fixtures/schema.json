@@ -1,0 +1,149 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SOXL Execution Monitor signals.json",
+  "type": "object",
+  "required": [
+    "last_session", "generated_utc", "data_stale", "is_preview",
+    "market", "engine", "tranches", "caps", "vrp", "tripwires",
+    "events", "upstream", "series", "checklist", "alerts"
+  ],
+  "properties": {
+    "last_session": { "type": "string" },
+    "generated_utc": { "type": "string" },
+    "data_stale": { "type": "boolean" },
+    "is_preview": { "type": "boolean" },
+    "market": {
+      "type": "object",
+      "required": ["soxx_close", "soxl_close", "soxx_ret", "soxl_ret"],
+      "properties": {
+        "soxx_close": { "type": "number" },
+        "soxl_close": { "type": "number" },
+        "soxx_ret": { "type": "number" },
+        "soxl_ret": { "type": "number" }
+      }
+    },
+    "engine": {
+      "type": "object",
+      "required": ["rv20", "rv20_p90", "rules", "ensemble", "gate", "e_target", "deployed", "gap", "act"],
+      "properties": {
+        "rv20": { "type": "number" },
+        "rv20_p90": { "type": "number" },
+        "rules": {
+          "type": "object",
+          "required": ["R1", "R2", "R3", "R4"],
+          "properties": {
+            "R1": { "type": "number" }, "R2": { "type": "number" },
+            "R3": { "type": "number" }, "R4": { "type": "number" }
+          }
+        },
+        "ensemble": { "type": "number" },
+        "gate": {
+          "type": "object",
+          "required": ["T", "consec_below_ma200", "ma200"],
+          "properties": {
+            "T": { "type": "number", "enum": [1.0, 0.5, 0.0] },
+            "consec_below_ma200": { "type": "integer" },
+            "ma200": { "type": "number" }
+          }
+        },
+        "e_target": { "type": "number" },
+        "deployed": { "type": "number" },
+        "gap": { "type": "number" },
+        "act": { "type": "boolean" }
+      }
+    },
+    "tranches": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "status", "pct", "triggers", "pnl"],
+        "properties": {
+          "id": { "type": "string" },
+          "status": { "type": "string", "enum": ["DEPLOYED", "ARMED", "WAITING", "SKIPPED"] },
+          "pct": { "type": ["number", "null"] },
+          "triggers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "pass"],
+              "properties": { "name": { "type": "string" }, "pass": { "type": "boolean" } }
+            }
+          },
+          "pnl": { "type": ["number", "null"] }
+        }
+      }
+    },
+    "caps": {
+      "type": "object",
+      "required": ["tranche_breaches", "sleeve_pnl", "sleeve_breach"],
+      "properties": {
+        "tranche_breaches": { "type": "array", "items": { "type": "string" } },
+        "sleeve_pnl": { "type": ["number", "null"] },
+        "sleeve_breach": { "type": "boolean" }
+      }
+    },
+    "vrp": {
+      "type": "object",
+      "required": ["iv30", "iv30_asof", "stale", "vrp", "zone"],
+      "properties": {
+        "iv30": { "type": ["number", "null"] },
+        "iv30_asof": { "type": ["string", "null"] },
+        "stale": { "type": "boolean" },
+        "vrp": { "type": ["number", "null"] },
+        "zone": { "type": ["string", "null"], "enum": ["BUY_OPTIONALITY", "DERISK_SHARES", "NEUTRAL", null] }
+      }
+    },
+    "tripwires": {
+      "type": "object",
+      "required": ["hyperscaler_plateau", "fed_hike", "memory_rollover", "ma200_break", "any"],
+      "properties": {
+        "hyperscaler_plateau": { "type": "boolean" },
+        "fed_hike": { "type": "boolean" },
+        "memory_rollover": { "type": "boolean" },
+        "ma200_break": { "type": "boolean" },
+        "any": { "type": "boolean" }
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["date", "label", "in_noadd_window", "days_until"],
+        "properties": {
+          "date": { "type": "string" },
+          "label": { "type": "string" },
+          "in_noadd_window": { "type": "boolean" },
+          "days_until": { "type": "integer" }
+        }
+      }
+    },
+    "upstream": {
+      "type": "object",
+      "required": ["available", "state", "id20", "on20", "dist20", "last_session"],
+      "properties": {
+        "available": { "type": "boolean" },
+        "state": { "type": ["string", "null"] },
+        "id20": { "type": ["number", "null"] },
+        "on20": { "type": ["number", "null"] },
+        "dist20": { "type": ["number", "null", "integer"] },
+        "last_session": { "type": ["string", "null"] }
+      }
+    },
+    "series": {
+      "type": "object",
+      "required": ["dates", "soxl_close", "rv20", "rv20_p90", "e_target", "equity_engine", "equity_bh", "tranche_marks"],
+      "properties": {
+        "dates": { "type": "array", "items": { "type": "string" } },
+        "soxl_close": { "type": "array" },
+        "rv20": { "type": "array" },
+        "rv20_p90": { "type": "array" },
+        "e_target": { "type": "array" },
+        "equity_engine": { "type": "array" },
+        "equity_bh": { "type": "array" },
+        "tranche_marks": { "type": "array" }
+      }
+    },
+    "checklist": { "type": "array" },
+    "alerts": { "type": "array" }
+  }
+}

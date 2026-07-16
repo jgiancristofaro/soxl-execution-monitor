@@ -1,0 +1,8 @@
+{
+  "iv30": 0.46,
+  "iv30_asof": "2026-07-01",
+  "gauntlet_cleared": false,
+  "tripwire_hyperscaler_plateau": false,
+  "tripwire_fed_hike_delivered": false,
+  "tripwire_memory_rollover": false
+}

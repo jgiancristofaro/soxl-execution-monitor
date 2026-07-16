@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Execution monitor for the SOXL 3x semiconductor ETF -- position sizing, tranche re-deployment, and hard-cap risk monitoring per the Reconciled Plan v1.0." />
+  <title>SOXL Execution Monitor</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F3AF;</text></svg>" />
+</head>
+<body>
+<div class="app">
+
+  <div id="tripwire-banner" class="banner banner-tripwire" style="display:none">
+    TRIPWIRE — methodology review required; base case invalidated.
+  </div>
+
+  <div id="cap-breach-banner" class="banner banner-breach" style="display:none"></div>
+
+  <header>
+    <h1>SOXL Execution Monitor</h1>
+    <span id="stale-badge" class="badge badge-amber" style="display:none">DATA STALE</span>
+    <button id="preview-toggle" class="chip" style="display:none"></button>
+    <span id="last-session"></span>
+  </header>
+
+  <div id="load-error" class="alert alert-error" style="display:none"></div>
+
+  <div id="preview-banner" class="preview-banner" style="display:none">
+    PREVIEW 3:50pm ET — unsettled
+  </div>
+
+  <section class="card header-strip" id="header-strip">
+    <div class="stat"><span class="stat-label">SOXX close</span><span id="soxx-close" class="stat-value">--</span></div>
+    <div class="stat"><span class="stat-label">SOXL close</span><span id="soxl-close" class="stat-value">--</span></div>
+    <div class="stat"><span class="stat-label">SOXX ret</span><span id="soxx-ret" class="stat-value">--</span></div>
+    <div class="stat"><span class="stat-label">SOXL ret</span><span id="soxl-ret" class="stat-value">--</span></div>
+  </section>
+
+  <section class="card hero" id="gauge-panel">
+    <h2>E_target</h2>
+    <div class="gauge-row">
+      <div id="e-target-number" class="e-target-number">--</div>
+      <div class="gauge-bar-wrap">
+        <div class="gauge-bar"><div id="gauge-fill" class="gauge-fill"></div><div id="gauge-deployed-marker" class="gauge-marker"></div></div>
+        <div class="gauge-scale"><span>0</span><span>1.0</span></div>
+      </div>
+      <div id="act-hold-flag" class="act-flag">--</div>
+    </div>
+    <div id="act-instruction" class="act-instruction" style="display:none">
+      Rebalance to target at MOC — never at the open.
+    </div>
+    <div class="rules-row" id="rules-row"></div>
+    <div class="gate-row">
+      <span>Trend gate T: <strong id="gate-t">--</strong> (<span id="gate-state">--</span>)</span>
+      <span>Deployed: <strong id="deployed-value">--</strong></span>
+      <span>Gap: <strong id="gap-value">--</strong></span>
+    </div>
+  </section>
+
+  <section class="card" id="tranche-panel">
+    <h2>Tranche Board</h2>
+    <div id="tranche-rows"></div>
+  </section>
+
+  <section class="card" id="caps-panel">
+    <h2>Hard-Cap Monitor</h2>
+    <div id="caps-rows"></div>
+    <div class="sleeve-row">
+      Sleeve blended P&amp;L: <strong id="sleeve-pnl">--</strong>
+      <span id="sleeve-status" class="badge">--</span>
+    </div>
+  </section>
+
+  <section class="card" id="vrp-panel">
+    <h2>VRP</h2>
+    <div class="vrp-row">
+      <div class="stat"><span class="stat-label">IV30</span><span id="iv30-value" class="stat-value">--</span></div>
+      <div class="stat"><span class="stat-label">rv20</span><span id="vrp-rv20" class="stat-value">--</span></div>
+      <div class="stat"><span class="stat-label">VRP</span><span id="vrp-value" class="stat-value">--</span></div>
+      <span id="vrp-stale-badge" class="badge badge-amber" style="display:none">STALE</span>
+    </div>
+    <div id="vrp-zone-label" class="zone-label">--</div>
+  </section>
+
+  <section class="card" id="events-panel">
+    <h2>Event Calendar</h2>
+    <div id="events-rows"></div>
+  </section>
+
+  <section class="card" id="tripwires-panel">
+    <h2>Tripwire Board</h2>
+    <div id="tripwire-rows"></div>
+  </section>
+
+  <section class="card card-subordinate" id="upstream-panel">
+    <h2>SOXX Regime Monitor <span class="subordinate-label">input, not a trigger</span></h2>
+    <div id="upstream-body">
+      <div class="stat"><span class="stat-label">State</span><span id="upstream-state" class="stat-value">--</span></div>
+      <div class="stat"><span class="stat-label">id20</span><span id="upstream-id20" class="stat-value">--</span></div>
+      <div class="stat"><span class="stat-label">on20</span><span id="upstream-on20" class="stat-value">--</span></div>
+      <div class="stat"><span class="stat-label">dist20</span><span id="upstream-dist20" class="stat-value">--</span></div>
+    </div>
+    <div id="upstream-unavailable" class="badge badge-grey" style="display:none">upstream unavailable</div>
+  </section>
+
+  <section class="card" id="checklist-panel">
+    <h2>Daily Checklist</h2>
+    <div id="checklist-rows"></div>
+  </section>
+
+  <section class="charts-grid">
+    <div class="card chart-card">
+      <h2>SOXL Close (YTD) — tranche fills</h2>
+      <canvas id="chart-soxl"></canvas>
+    </div>
+    <div class="card chart-card">
+      <h2>rv20 vs thresholds</h2>
+      <canvas id="chart-rv20"></canvas>
+    </div>
+    <div class="card chart-card">
+      <h2>E_target history</h2>
+      <canvas id="chart-etarget"></canvas>
+    </div>
+    <div class="card chart-card">
+      <h2>Attribution: engine vs buy-and-hold</h2>
+      <canvas id="chart-attribution"></canvas>
+    </div>
+  </section>
+
+  <footer>
+    <a href="methodology.html">Methodology</a>
+    <p>Research and education only. Not investment advice. A 3x levered fund can lose most of its value in days.</p>
+  </footer>
+
+</div>
+<script type="module" src="/src/main.ts"></script>
+</body>
+</html>

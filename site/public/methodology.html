@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Methodology — SOXL Execution Monitor</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0f1117;
+      color: #e6edf3;
+      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+      line-height: 1.7;
+      padding: 2rem 1.5rem 4rem;
+    }
+    .content { max-width: 760px; margin: 0 auto; }
+    nav { margin-bottom: 2rem; }
+    nav a { color: #38bdf8; text-decoration: none; font-size: 0.9rem; margin-right: 1rem; }
+    nav a:hover { text-decoration: underline; }
+    h1 { font-size: 1.75rem; font-weight: 800; margin-bottom: 0.5rem; }
+    h2 { font-size: 1.15rem; font-weight: 700; margin: 2rem 0 0.5rem; color: #38bdf8; }
+    h3 { font-size: 0.95rem; font-weight: 600; margin: 1.25rem 0 0.3rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; }
+    p { margin: 0.6rem 0; color: #d1d5db; }
+    ul, ol { padding-left: 1.5rem; margin: 0.5rem 0; color: #d1d5db; }
+    li { margin: 0.3rem 0; }
+    code {
+      background: #1f2937;
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      font-family: 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 0.88em;
+      color: #86efac;
+    }
+    pre {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0.75rem 0;
+    }
+    pre code { background: none; padding: 0; }
+    table { width: 100%; border-collapse: collapse; margin: 0.75rem 0; font-size: 0.88rem; }
+    th { text-align: left; padding: 0.5rem 0.75rem; color: #9ca3af; border-bottom: 1px solid #30363d; }
+    td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #1f2937; color: #d1d5db; }
+    .note { background: #1c2a1c; border-left: 3px solid #22c55e; padding: 0.75rem 1rem; border-radius: 0 6px 6px 0; margin: 1rem 0; font-size: 0.88rem; }
+    .warn { background: #2a1c1c; border-left: 3px solid #f87171; padding: 0.75rem 1rem; border-radius: 0 6px 6px 0; margin: 1rem 0; font-size: 0.88rem; }
+    dl { margin: 0.5rem 0; }
+    dt { font-weight: 700; color: #e6edf3; margin-top: 1rem; display: flex; align-items: baseline; gap: 0.5rem; }
+    dt code { font-size: 0.85em; }
+    dd { margin: 0.2rem 0 0 1.25rem; color: #d1d5db; font-size: 0.9rem; }
+    .tag { display: inline-block; font-size: 0.7rem; font-weight: 600; padding: 0.1em 0.45em; border-radius: 4px; background: #1f2937; color: #9ca3af; letter-spacing: 0.04em; text-transform: uppercase; vertical-align: middle; }
+    .exec-summary { background: #0d1f2d; border: 1px solid #1e3a5f; border-radius: 10px; padding: 1.5rem 1.75rem; margin: 1.75rem 0 2rem; }
+    .exec-summary h2 { color: #7dd3fc; margin-top: 0; font-size: 1.1rem; }
+    footer { margin-top: 3rem; padding-top: 1.25rem; border-top: 1px solid #30363d; font-size: 0.75rem; color: #9ca3af; text-align: center; }
+  </style>
+</head>
+<body>
+<div class="content">
+  <nav><a href="./">← Dashboard</a><a href="methodology-archive/index.html">Archive</a></nav>
+
+  <h1>SOXL Execution Monitor — Methodology</h1>
+  <p style="color:#9ca3af; font-size:0.85rem;">Reconciled Plan v1.0 · last revised 2026-07-15</p>
+
+  <div class="exec-summary">
+    <h2>§0 The System in Ten Lines</h2>
+    <ol>
+      <li>SOXL is a 3x levered SOXX fund; volatility decay makes size the primary risk lever, not direction.</li>
+      <li>Four sizing rules score realized 20-day volatility (<code>rv20</code>) against fixed and rolling thresholds; their average is the ensemble.</li>
+      <li>A trend gate (SOXX vs its 200-day MA) scales that ensemble down when the long-term trend breaks.</li>
+      <li><code>E_target = ensemble × gate</code> is the one number this system exists to produce.</li>
+      <li>Capital deploys in three tranches, not all at once, each with its own arming condition.</li>
+      <li>A 10-point churn band stops the system from trading noise.</li>
+      <li>Hard per-tranche and sleeve-level stop-outs exist independently of the sizing math, for survival.</li>
+      <li>Implied-vs-realized vol (VRP) tells you whether options are cheap or rich, never whether to size up SOXL.</li>
+      <li>Four tripwires can invalidate the entire base case; any one trip halts the plan for review.</li>
+      <li>A sibling dashboard (SOXX Regime Monitor) supplies context signals — it never talks to this engine.</li>
+    </ol>
+  </div>
+
+  <h2>§1 Origin &amp; Relationship to the SOXX Regime Monitor</h2>
+  <p>
+    This project began as the execution half of a plan whose research half already existed:
+    <a href="https://jgiancristofaro.github.io/soxx-regime-monitor/" style="color:#38bdf8;">soxx-regime-monitor</a>
+    watches SOXX for signs of institutional distribution using an overnight-vs-intraday return
+    decomposition. That project answers "is something changing under the surface." This project
+    answers a completely different question: "given the volatility and trend that already
+    happened, how much SOXL should be held right now, and how does that translate into an actual
+    ledger of fills."
+  </p>
+  <p>
+    The two are deliberately kept as separate dashboards with separate data, separate equity
+    curves, and separate git histories. <strong>The engine decides, the monitor informs.</strong>
+    Collapsing them into one system would let a discretionary read of the regime monitor quietly
+    override a mechanical sizing rule — exactly the failure mode systematic position sizing is
+    meant to prevent. Practically: nothing computed on this dashboard is allowed to read from the
+    regime monitor's feed (enforced by a static test on the sizing engine's source code); the
+    regime monitor's numbers appear here only as a captioned, visually subordinate panel.
+  </p>
+
+  <h2>§2 Derived Series &amp; Definitions</h2>
+  <p>All series below are computed on SOXX closes unless noted; SOXL is used only for the
+    execution ledger, hard-cap P&amp;L, and the attribution backtest — never for sizing.</p>
+  <dl>
+    <dt><code>ret_t = close_t / close_(t-1) − 1</code></dt>
+    <dd>Daily simple return.</dd>
+    <dt><code>rv20 = std(ret, 20) × √252</code></dt>
+    <dd>20-session realized volatility, annualized, sample standard deviation (ddof=1).</dd>
+    <dt><code>rv20_p90</code></dt>
+    <dd>Rolling 252-session 90th percentile of <code>rv20</code>, minimum 120 periods of history
+      before it activates.</dd>
+    <dt><code>ma20 / ma50 / ma200</code></dt>
+    <dd>Simple moving averages of close, used for trend context and the trend gate.</dd>
+    <dt><code>id = close/open − 1</code>, <code>id20 = rolling 20-session sum of id</code></dt>
+    <dd>Intraday-return decomposition, used only for the T2 tranche trigger and dashboard
+      display — computed independently from the regime monitor's own <code>id20</code>.</dd>
+  </dl>
+
+  <h2>§3 The Ensemble Sizing Rules</h2>
+  <p>Four rules each map <code>rv20</code> to a target exposure fraction in [0, 1]. Two use the
+    rolling 90th-percentile of realized vol as their trigger (adaptive to the current regime);
+    two use fixed thresholds (a hard floor that doesn't drift with a slowly-rising vol regime).
+    Averaging four independently-triggered rules smooths the size path instead of producing a
+    single abrupt step function.</p>
+  <table>
+    <tr><th>Rule</th><th>Trigger</th><th>Vol budget</th><th>Formula</th></tr>
+    <tr><td>R1</td><td>rv20 &gt; p90(rv20)</td><td>0.40</td><td><code>min(1, 0.40/rv20)</code></td></tr>
+    <tr><td>R2</td><td>rv20 &gt; p90(rv20)</td><td>0.50</td><td><code>min(1, 0.50/rv20)</code></td></tr>
+    <tr><td>R3</td><td>rv20 &gt; 0.60</td><td>0.50</td><td><code>min(1, 0.50/rv20)</code></td></tr>
+    <tr><td>R4</td><td>rv20 &gt; 0.55</td><td>0.40</td><td><code>min(1, 0.40/rv20)</code></td></tr>
+  </table>
+  <p><code>ENSEMBLE = (R1+R2+R3+R4) / 4</code>.</p>
+  <p><strong>Why volatility, not price, drives size:</strong> a 3x fund's daily rebalancing means
+    variance drag scales with roughly <code>3σ²</code> per day — the cost of holding leverage
+    compounds with the square of realized vol, not with direction. A 40-vol regime and an
+    80-vol regime can carry the same trend and the same fundamental thesis, but the second costs
+    roughly four times as much in pure decay to hold at the same size. De-levering is therefore
+    triggered by <em>how violent</em> the tape is, not by whether it's up or down — hence four
+    vol-only rules and a completely separate trend gate for direction.</p>
+  <p>Only <em>extreme</em> vol de-levers: at rv20 = 0.50 (a fairly ordinary semiconductor vol
+    print) all four rules still return full exposure, since 0.50 sits under every fixed threshold
+    and (typically) under the rolling p90. The rules only start cutting size once realized vol
+    pushes into the tail of its own recent distribution or past the fixed 55-60% floors.</p>
+
+  <h3>Cross-era evidence</h3>
+  <table>
+    <tr><th></th><th>Total return</th><th>Max drawdown</th><th>Worst year</th></tr>
+    <tr><td>Ensemble × gate, 2017–2025</td><td>+1189%</td><td>−83%</td><td>−78%</td></tr>
+    <tr><td>SOXL buy-and-hold, 2017–2025</td><td>+978%</td><td>−90%</td><td>−86%</td></tr>
+    <tr><td>Ensemble × gate, 2026 YTD</td><td>+300%</td><td colspan="2"></td></tr>
+    <tr><td>SOXL buy-and-hold, 2026 YTD</td><td>+250%</td><td colspan="2"></td></tr>
+  </table>
+  <div class="note">This is the author's own research, run on one instrument's one historical
+    path. <strong>n is small everywhere it matters</strong> — one underlying, one decade, one
+    volatility regime shift (2022) inside the backtest window. Treat the outperformance as
+    directional evidence that vol-scaling helps a 3x product survive drawdowns, not as a
+    guaranteed edge. See §9 for the honesty appendix on overfitting risk.</div>
+
+  <h2>§4 Trend Gate &amp; Tripwires</h2>
+  <p>The trend gate <code>T</code> scales the ensemble by the long-term trend state of SOXX:</p>
+  <ul>
+    <li><code>T = 1.0</code> while the latest close is above its 200-day MA.</li>
+    <li><code>T = 0.5</code> on any single close at or below the 200-day MA.</li>
+    <li><code>T = 0.0</code> after 5 <em>consecutive</em> closes at or below the 200-day MA — the
+      counter resets to zero on any close back above it. <code>T = 0.0</code> is sticky (stays
+      zero every day the streak continues) and simultaneously raises tripwire #4 below.</li>
+  </ul>
+  <p><code>E_target = round(ENSEMBLE × T, 3)</code>.</p>
+
+  <h3>The four tripwires</h3>
+  <p>Any one of these trips a dashboard-wide red banner reading "methodology review required;
+    base case invalidated." Three are manually-flagged judgment calls (set in
+    <code>data/manual.json</code>); one is computed automatically.</p>
+  <ol>
+    <li><strong>≥2 hyperscaler capex plateau</strong> — manual. The base case assumes continued
+      AI-datacenter capex growth across at least three of the major hyperscalers; two or more
+      flattening simultaneously would remove the demand thesis for semiconductor capacity.</li>
+    <li><strong>Delivered Fed hike</strong> — manual. The plan is sized for a cutting or
+      hold-steady rate regime; an actual delivered hike (not just hawkish talk) changes the
+      liquidity backdrop leveraged equity exposure depends on.</li>
+    <li><strong>TrendForce memory rollover</strong> — manual. A confirmed rollover in TrendForce's
+      memory pricing data would signal the current up-cycle in memory (a major SOXX component)
+      has turned.</li>
+    <li><strong>SOXX 5 consecutive closes below MA200</strong> — computed automatically; identical
+      condition to the gate's <code>T = 0.0</code> state.</li>
+  </ol>
+
+  <h2>§5 Tranche Re-Deployment Plan</h2>
+  <p>Capital deploys into SOXL in three tranches rather than all at once, so that entry timing
+    itself carries some risk control independent of the sizing math:</p>
+  <ul>
+    <li><strong>T1 (25% of C)</strong> — discretionary event-branch entry (originally gated on the
+      TSMC print); reported <code>DEPLOYED</code> once a fill is recorded in
+      <code>position.json</code>, otherwise <code>WAITING</code>.</li>
+    <li><strong>T2 (+20% of C)</strong> — arms when <code>rv20 &lt; 0.65</code> OR
+      <code>id20 &gt; −0.03</code> (either condition, using this dashboard's own <code>id20</code>,
+      never the regime monitor's).</li>
+    <li><strong>T3 (up to E_target)</strong> — arms only when a manual "gauntlet cleared" flag is
+      set, the trend gate is at least half-open (<code>T ≥ 0.5</code>), and no tripwire has
+      tripped. This is the tranche that ultimately hands control to the mechanical target.</li>
+  </ul>
+  <p>Once all three tranches show <code>DEPLOYED</code>, the tranche board collapses to a single
+    "ENGINE GOVERNS" badge — from that point forward, §3.4's <code>E_target</code>/deployed gap
+    alone drives every ACT/HOLD decision, with no further tranche-level gating.</p>
+
+  <h2>§6 Hard Caps &amp; Survival Sizing</h2>
+  <p>The sizing math above optimizes for long-run compounding; it says nothing about surviving a
+    single catastrophic gap. Two independent, always-on stop-outs exist purely for capital
+    preservation, checked against each deployed tranche's actual cost basis:</p>
+  <ul>
+    <li><strong>Per-tranche cap:</strong> any single deployed tranche down 25% or more from its
+      cost basis (boundary inclusive) is flagged <code>BREACH-HALVE</code>.</li>
+    <li><strong>Sleeve cap:</strong> the capital-weighted blended P&amp;L across all deployed
+      tranches down 35% or more is flagged <code>BREACH-FLAT</code> and overrides everything else
+      on the dashboard — a full red banner plus a GitHub issue every day the breach persists.</li>
+  </ul>
+  <div class="warn"><strong>The June-5 gap lesson:</strong> no daily-close-based system, this one
+    included, can prevent an overnight gap. Every rule in this document evaluates settled closes;
+    a 3x fund can move 25%+ between one settled close and the next print with zero opportunity to
+    react intraday. The hard caps exist to bound the damage after the fact, not to prevent it.</div>
+
+  <h2>§7 VRP Playbook</h2>
+  <p><code>VRP = IV30 − rv20</code> (IV30 is a manually-entered 30-day implied vol reading,
+    dated and flagged stale after 7 sessions without an update).</p>
+  <ul>
+    <li><code>VRP ≤ −0.10</code> → <strong>BUY OPTIONALITY</strong>: implied vol is cheap
+      relative to what's actually realizing. Calls or puts are priced favorably here.</li>
+    <li><code>VRP ≥ +0.10</code> → <strong>DE-RISK WITH SHARES</strong>: insurance is rich;
+      reducing share exposure directly is more efficient than buying expensive puts.</li>
+    <li>Otherwise → <strong>NEUTRAL</strong>.</li>
+  </ul>
+  <div class="warn"><strong>Sign convention warning:</strong> a negative VRP zone means options
+    are cheap to <em>buy</em>. It is never, under any zone, a signal to <em>sell</em> options —
+    this plan carries no short-vol exposure and the VRP panel does not size SOXL itself.</div>
+
+  <h2>§8 Execution Rules</h2>
+  <ul>
+    <li><strong>MOC only.</strong> When ACT fires, the instruction is always to rebalance to
+      target at the closing auction — never at the open, where spreads and gap risk on a 3x
+      product are materially worse.</li>
+    <li><strong>Preview run.</strong> A 3:50pm ET pipeline run (<code>preview.json</code>) surfaces
+      the ACT/HOLD call on the live, not-yet-settled candle, specifically to inform the MOC
+      decision minutes before the close. It never touches the settled <code>signals.json</code>
+      ledger and never opens alert issues.</li>
+    <li><strong>Churn band.</strong> ACT requires <code>|E_target − deployed| ≥ 0.10</code> (10
+      points of C) — small drifts inside that band are ignored so the plan isn't rebalancing
+      every session on sizing noise.</li>
+    <li><strong>No-add windows.</strong> Events flagged in the calendar carry a 24-hour no-add
+      window; the plan does not initiate new size directly ahead of a known binary catalyst.</li>
+  </ul>
+
+  <h2>§9 Known Failure Modes &amp; Honesty Appendix</h2>
+  <p>All four rule thresholds and both gate parameters were chosen with 2026 market behavior
+    already in the training sample — this is <em>in-sample</em> parameter selection, and the
+    backtest numbers in §3 should be read with that firmly in mind. A split-half stability check
+    (fitting on the first half of the backtest window and evaluating on the second) produced a
+    correlation of only <strong>ρ = 0.23</strong> between the two halves' optimal parameters —
+    a weak result that argues for treating the specific numeric thresholds as reasonable, not
+    optimal, and revisiting them periodically rather than trusting a one-time fit.</p>
+  <p>A monthly stability audit is planned: re-run the split-half check on trailing data and flag
+    if the live parameters have drifted meaningfully out of the stable region.</p>
+  <p><strong>What would tear this plan up:</strong> any of the four tripwires in §4; a
+    semiconductor-cycle regime change that invalidates the vol/trend relationship the ensemble
+    rules assume (e.g. a structurally higher vol floor); or a persistent divergence between SOXX
+    and the broader thesis it's meant to represent. Any of these should trigger a full
+    methodology review, not a parameter tweak.</p>
+
+  <h2>§10 Changelog &amp; Archive</h2>
+  <p>Every edit to this page is snapshotted to
+    <a href="methodology-archive/index.html" style="color:#38bdf8;">methodology-archive/</a>
+    before the change is made, so the plan's evolution stays auditable.</p>
+  <ul>
+    <li><strong>2026-07-15</strong> — Initial publication of Reconciled Plan v1.0.</li>
+  </ul>
+
+  <footer>Research and education only. Not investment advice. A 3x levered fund can lose most of its value in days.</footer>
+</div>
+</body>
+</html>

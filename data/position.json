@@ -1,0 +1,9 @@
+{
+  "sleeve_note": "C = capital sleeve committed to the plan. All pct values are fractions of C.",
+  "cash_pct": 1.0,
+  "tranches": [
+    { "id": "T1", "status": "WAITING", "pct": 0.25, "cost_basis_soxl": null, "fill_date": null },
+    { "id": "T2", "status": "WAITING", "pct": 0.20, "cost_basis_soxl": null, "fill_date": null },
+    { "id": "T3", "status": "WAITING", "pct": null, "cost_basis_soxl": null, "fill_date": null }
+  ]
+}
