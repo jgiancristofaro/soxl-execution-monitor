@@ -1,6 +1,6 @@
 {
   "last_session": "2026-07-22",
-  "generated_utc": "2026-07-22T21:30:01.005010+00:00",
+  "generated_utc": "2026-07-22T21:58:42.860575+00:00",
   "data_stale": false,
   "is_preview": false,
   "market": {
@@ -3054,11 +3054,5 @@
       "value": 0
     }
   ],
-  "alerts": [
-    {
-      "type": "tranche_armed",
-      "title": "T2 newly ARMED",
-      "body": "T2 trigger conditions now pass."
-    }
-  ]
+  "alerts": []
 }
