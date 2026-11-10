@@ -1,6 +1,6 @@
 {
   "last_session": "2026-11-09",
-  "generated_utc": "2026-11-10T02:33:47.021664+00:00",
+  "generated_utc": "2026-11-10T03:03:52.960295+00:00",
   "data_stale": false,
   "is_preview": false,
   "market": {
@@ -3075,11 +3075,5 @@
       "value": null
     }
   ],
-  "alerts": [
-    {
-      "type": "act",
-      "title": "ACT \u2014 rebalance to target 0.665",
-      "body": "Rebalance to target at MOC \u2014 never at the open."
-    }
-  ]
+  "alerts": []
 }
