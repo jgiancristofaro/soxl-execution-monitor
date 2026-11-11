@@ -1,6 +1,6 @@
 {
   "last_session": "2026-11-10",
-  "generated_utc": "2026-11-11T00:25:32.559811+00:00",
+  "generated_utc": "2026-11-11T00:57:18.001757+00:00",
   "data_stale": false,
   "is_preview": false,
   "market": {
@@ -3075,11 +3075,5 @@
       "value": null
     }
   ],
-  "alerts": [
-    {
-      "type": "tripwire",
-      "title": "Tripwire newly tripped",
-      "body": "Methodology review required; base case invalidated."
-    }
-  ]
+  "alerts": []
 }
